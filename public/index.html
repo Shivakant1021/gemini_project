@@ -17,6 +17,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 5px;
     }
 
     h1 {
@@ -28,7 +29,7 @@
       width: 100%;
       max-width: 800px;
       background-color: #fff;
-      padding: 1rem;
+      padding: 2rem;
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       height: 500px;
@@ -54,9 +55,23 @@
 
     .bot {
       align-self: flex-start;
-      background-color: #f1f8e9;
-      color: #33691e;
+      background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
+      color: #004d40;
+      border-left: 5px solid #00acc1;
+      padding: 1rem;
+      box-shadow: 0 2px 6px rgba(0, 172, 193, 0.3);
+      position: relative;
+      font-style: italic;
     }
+
+    .bot::before {
+      content: "🤖";
+      position: absolute;
+      left: -2rem;
+      top: 0.8rem;
+      font-size: 1.2rem;
+    }
+
 
     .loader {
       font-style: italic;
