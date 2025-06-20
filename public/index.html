@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gemini AI Chat</title>
-<style>
+  <style>
     * {
       box-sizing: border-box;
     }
@@ -110,49 +111,52 @@
     button:hover {
       background-color: #3367d6;
     }
+
     .header {
-    display: flex;
-    width: 50rem;
-    align-items: center;
-    justify-content: space-between;
-    background: linear-gradient(135deg, #1f1f1f, #2a2a72);
-    padding: 1.5rem 2rem;
-    border-radius: 1rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    color: #fff;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    flex-wrap: wrap;
-    gap: 1rem;
+      display: flex;
+      width: 50rem;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, #1f1f1f, #2a2a72);
+      padding: 1.5rem 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
 
-  .header img {
-    border-radius: 0.5rem;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
-    width: 100px;
-    height: auto;
-  }
+    .header img {
+      border-radius: 0.5rem;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+      width: 100px;
+      height: auto;
+    }
 
-  .header h1 {
-    flex: 1;
-    font-size: 2rem;
-    font-weight: bold;
-    margin: 0;
-    text-align: center;
-    background: linear-gradient(to right, #ffffff, #a0c4ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
+    .header h1 {
+      flex: 1;
+      font-size: 2rem;
+      font-weight: bold;
+      margin: 0;
+      text-align: center;
+      background: linear-gradient(to right, #ffffff, #a0c4ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
 
-  #date {
-    font-size: 1rem;
-    color: #ccc;
-  }
-
-</style>
+    #date {
+      font-size: 1rem;
+      color: #ccc;
+    }
+  </style>
 </head>
+
 <body>
   <div class="header">
-    <img src="https://akm-img-a-in.tosshub.com/indiatoday/images/story/202505/gemini-303403593-3x4.png?VersionId=GX9GSEa1YB4mOgGbrZJdi36lrfB2PPFY" alt="Gemini Logo" width="100" />
+    <img
+      src="https://akm-img-a-in.tosshub.com/indiatoday/images/story/202505/gemini-303403593-3x4.png?VersionId=GX9GSEa1YB4mOgGbrZJdi36lrfB2PPFY"
+      alt="Gemini Logo" width="100" />
     <h1>💬 Gemini AI Chat Bot</h1>
     <span id="date">Date :</span>
   </div>
@@ -164,8 +168,18 @@
   <div id="input-area">
     <textarea id="prompt" placeholder="Type your question..."></textarea>
     <button onclick="askGemini()">Send</button>
+    <button onclick="clearChat()">🆕 New Chat</button>
   </div>
 
+
+  <div class="footer">
+    <p>
+      Made with ❤️ by <a href="https://github.com/shivakant1021" target="_blank">Shviakant Singh</a> | 📩
+      shivakant011999@gmail.com
+    </p>
+
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
 
     const dateElem = document.getElementById("date");
@@ -215,11 +229,41 @@
     }
 
     // Optional: Enter key + Ctrl to submit
-    document.getElementById("prompt").addEventListener("keydown", function(e) {
+    document.getElementById("prompt").addEventListener("keydown", function (e) {
       if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
         askGemini();
       }
     });
+
+    // for clear chat
+    function clearChat() {
+      chatBox.innerHTML = "";  // Remove all messages
+      document.getElementById("prompt").value = "";  // Clear the input
+      appendMessage("Chat cleared. Start a new conversation!", "bot");
+    }
+    function clearChat() {
+      Swal.fire({
+        title: 'Start New Chat?',
+        text: "This will clear the current conversation.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, clear it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          chatBox.innerHTML = "";
+          document.getElementById("prompt").value = "";
+          Swal.fire(
+            'Cleared!',
+            'Your chat has been cleared.',
+            'success'
+          )
+        }
+      });
+    }
+
   </script>
 </body>
+
 </html>
