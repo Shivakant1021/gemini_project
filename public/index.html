@@ -5,154 +5,33 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gemini AI Chat</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #81cbf0;
-      margin: 0;
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-    }
-
-    h1 {
-      color: #333;
-      margin-bottom: 1rem;
-    }
-
-    #chat-box {
-      width: 100%;
-      max-width: 800px;
-      background-color: #fff;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      height: 500px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .message {
-      padding: 0.8rem;
-      border-radius: 8px;
-      line-height: 1.5;
-      white-space: pre-wrap;
-      max-width: 90%;
-    }
-
-    .user {
-      align-self: flex-end;
-      background-color: #e3f2fd;
-      color: #0d47a1;
-    }
-
-    .bot {
-      align-self: flex-start;
-      background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
-      color: #004d40;
-      border-left: 5px solid #00acc1;
-      padding: 1rem;
-      box-shadow: 0 2px 6px rgba(0, 172, 193, 0.3);
-      position: relative;
-      font-style: italic;
-    }
-
-    .bot::before {
-      content: "🤖";
-      position: absolute;
-      left: -2rem;
-      top: 0.8rem;
-      font-size: 1.2rem;
-    }
-
-
-    .loader {
-      font-style: italic;
-      color: #777;
-    }
-
-    #input-area {
-      margin-top: 1rem;
-      width: 100%;
-      max-width: 800px;
-      display: flex;
-      gap: 10px;
-    }
-
-    textarea {
-      flex: 1;
-      padding: 10px;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      resize: none;
-      height: 80px;
-    }
-
-    button {
-      padding: 0 20px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 6px;
-      background-color: #4285f4;
-      color: white;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-
-    button:hover {
-      background-color: #3367d6;
-    }
-
-    .header {
-      display: flex;
-      width: 50rem;
-      align-items: center;
-      justify-content: space-between;
-      background: linear-gradient(135deg, #1f1f1f, #2a2a72);
-      padding: 1.5rem 2rem;
-      border-radius: 1rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .header img {
-      border-radius: 0.5rem;
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
-      width: 100px;
-      height: auto;
-    }
-
-    .header h1 {
-      flex: 1;
-      font-size: 2rem;
-      font-weight: bold;
-      margin: 0;
-      text-align: center;
-      background: linear-gradient(to right, #ffffff, #a0c4ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    #date {
-      font-size: 1rem;
-      color: #ccc;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
+  <!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gemini AI Chat</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+ <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <h2>Search History</h2>
+      <button id="closeSidebar">✖</button>
+    </div>
+    <ul id="historyList"></ul>
+  </div>
+
+  <!-- Sidebar toggle button (for mobile only) -->
+  <button id="toggleSidebar" class="hamburger">☰</button>
+
   <div class="header">
     <img
       src="https://akm-img-a-in.tosshub.com/indiatoday/images/story/202505/gemini-303403593-3x4.png?VersionId=GX9GSEa1YB4mOgGbrZJdi36lrfB2PPFY"
@@ -160,36 +39,37 @@
     <h1>💬 Gemini AI Chat Bot</h1>
     <span id="date">Date :</span>
   </div>
+  <div>
+    <div class="center-body">
+      <div id="chat-box"></div>
 
-  <div id="chat-box">
-    <!-- Chat history will be appended here -->
-  </div>
+      <div id="input-area">
+        <textarea id="prompt" placeholder="Type your question..."></textarea>
+        <button onclick="askGemini()">Send</button>
+        <button onclick="clearChat()">🆕 New Chat</button>
+      </div>
 
-  <div id="input-area">
-    <textarea id="prompt" placeholder="Type your question..."></textarea>
-    <button onclick="askGemini()">Send</button>
-    <button onclick="clearChat()">🆕 New Chat</button>
-  </div>
+      <div class="footer">
+        <p>
+          Developed by <a href="https://github.com/shivakant1021" target="_blank">Shviakant Singh</a> | 📩
+          shivakant011999@gmail.com |
+          <a href="https://www.linkedin.com/in/shivakant-singh-a53523250/" target="_blank">Git Hub</a>
+        </p>
+      </div>
+    </div>
 
 
-  <div class="footer">
-    <p>
-      Made with ❤️ by <a href="https://github.com/shivakant1021" target="_blank">Shviakant Singh</a> | 📩
-      shivakant011999@gmail.com
-    </p>
-
-  </div>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
-
-    const dateElem = document.getElementById("date");
+ const dateElem = document.getElementById("date");
     const today = new Date().toLocaleDateString();
     dateElem.textContent = `Date : ${today}`;
 
-
-
     const chatBox = document.getElementById("chat-box");
+    const historyList = document.getElementById("historyList");
+    const promptInput = document.getElementById("prompt");
 
+    // Append chat message
     function appendMessage(content, type) {
       const div = document.createElement("div");
       div.className = `message ${type}`;
@@ -198,12 +78,25 @@
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
+    // Add search to history
+    function addToHistory(query) {
+      const li = document.createElement("li");
+      li.textContent = query;
+      li.addEventListener("click", () => {
+        promptInput.value = query;
+        askGemini();
+      });
+      historyList.prepend(li); // newest on top
+    }
+
+    // Ask Gemini (API)
     async function askGemini() {
-      const prompt = document.getElementById("prompt").value.trim();
+      const prompt = promptInput.value.trim();
       if (!prompt) return;
 
-      document.getElementById("prompt").value = "";
+      promptInput.value = "";
       appendMessage(prompt, "user");
+      addToHistory(prompt);
 
       const loader = document.createElement("div");
       loader.className = "message loader bot";
@@ -228,19 +121,14 @@
       }
     }
 
-    // Optional: Enter key + Ctrl to submit
-    document.getElementById("prompt").addEventListener("keydown", function (e) {
+    // Submit on Ctrl+Enter
+    promptInput.addEventListener("keydown", function (e) {
       if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
         askGemini();
       }
     });
 
-    // for clear chat
-    function clearChat() {
-      chatBox.innerHTML = "";  // Remove all messages
-      document.getElementById("prompt").value = "";  // Clear the input
-      appendMessage("Chat cleared. Start a new conversation!", "bot");
-    }
+    // Clear chat with SweetAlert
     function clearChat() {
       Swal.fire({
         title: 'Start New Chat?',
@@ -253,16 +141,45 @@
       }).then((result) => {
         if (result.isConfirmed) {
           chatBox.innerHTML = "";
-          document.getElementById("prompt").value = "";
-          Swal.fire(
-            'Cleared!',
-            'Your chat has been cleared.',
-            'success'
-          )
+          promptInput.value = "";
+          Swal.fire('Cleared!', 'Your chat has been cleared.', 'success');
         }
       });
     }
 
+    // Sidebar toggle
+    const sidebar = document.getElementById("sidebar");
+const toggleBtn = document.getElementById("toggleSidebar");
+const closeBtn = document.getElementById("closeSidebar");
+
+toggleBtn.addEventListener("click", () => {
+  sidebar.classList.add("active"); // open sidebar
+  toggleBtn.style.display = "none"; // hide toggle button
+  closeBtn.style.display = "block"; // show close button
+});
+
+closeBtn.addEventListener("click", () => {
+  sidebar.classList.remove("active"); // close sidebar
+  toggleBtn.style.display = "block"; // show toggle button
+  closeBtn.style.display = "none"; // hide close button
+});
+
+// Desktop behavior
+function handleResize() {
+  if (window.innerWidth > 768) {
+    sidebar.classList.add("active");     // always open on desktop
+    toggleBtn.style.display = "none";    // hide hamburger
+    closeBtn.style.display = "none";     // hide close button
+  } else {
+    sidebar.classList.remove("active");  // closed by default on mobile
+    toggleBtn.style.display = "block";   // show hamburger
+    closeBtn.style.display = "none";     // hide close button initially
+  }
+}
+
+// Run on load + on resize
+handleResize();
+window.addEventListener("resize", handleResize);
   </script>
 </body>
 
