@@ -1,61 +1,113 @@
-
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const path = require('path');
-const app = express();
-const PORT = process.env.PORT;
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
+const app = express();
+const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.GEMINI_API_KEY;
 
+/* =========================
+   RENDER / PROXY FIX (MUST)
+========================= */
+app.set('trust proxy', 1);
+
+/* =========================
+   MIDDLEWARE
+========================= */
 app.use(express.static('public'));
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
 app.use(helmet());
 
-
-
-// ✅ Rate limiter (10 requests per 6 hours per IP)
-const limiter = rateLimit({
-  windowMs: 6 * 60 * 60 * 1000, // 6 hours
+/* =========================
+   USER RATE LIMIT (FRONTEND)
+   10 requests / 6 hours / IP
+========================= */
+const userLimiter = rateLimit({
+  windowMs: 6 * 60 * 60 * 1000,
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: '⛔ Too many requests. Try again after 6 hours.' },
+  message: {
+    error: '⛔ Too many requests. Try again after 6 hours.'
+  }
 });
 
-app.use('/api/gemini', limiter);
+app.use('/api/gemini', userLimiter);
 
+/* =========================
+   GEMINI THROTTLING (SERVER)
+   Prevent RPM burst
+========================= */
+let lastGeminiCall = 0;
+const GEMINI_COOLDOWN = 20_000; // 1 request / 20 sec
+
+async function callGemini(prompt) {
+  const now = Date.now();
+
+  if (now - lastGeminiCall < GEMINI_COOLDOWN) {
+    throw { status: 429, message: 'AI cooling down. Try again shortly.' };
+  }
+
+  lastGeminiCall = now;
+
+  return axios.post(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${API_KEY}`,
+    {
+      contents: [{ parts: [{ text: prompt }] }]
+    },
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+}
+
+/* =========================
+   ROUTES
+========================= */
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// API route to call Gemini
 app.post('/api/gemini', async (req, res) => {
   const { prompt } = req.body;
 
-  try {
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,
-      {
-        contents: [{ parts: [{ text: prompt }] }]
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+  if (!prompt || prompt.length > 2000) {
+    return res.status(400).json({ error: 'Invalid prompt' });
+  }
 
-    const text = response.data.candidates[0]?.content?.parts[0]?.text || 'No response';
+  try {
+    const response = await callGemini(prompt);
+
+    const text =
+      response.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      'No response';
+
     res.json({ response: text });
+
   } catch (err) {
-    console.error('Gemini API error:', err.response?.data || err.message);
-    res.status(500).json({ error: 'Gemini API failed' });
+    const status = err?.response?.status || err?.status;
+    const data = err?.response?.data;
+
+    console.error('Gemini error:', data || err.message);
+
+    /* ===== GEMINI QUOTA HIT ===== */
+    if (status === 429) {
+      return res.status(429).json({
+        error: '🤖 AI rate limit reached. Please try again later.'
+      });
+    }
+
+    /* ===== SAFE FALLBACK ===== */
+    res.status(503).json({
+      error: 'AI service temporarily unavailable'
+    });
   }
 });
 
+/* =========================
+   START SERVER
+========================= */
 app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
