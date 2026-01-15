@@ -42,7 +42,7 @@ app.use('/api/gemini', userLimiter);
    Prevent RPM burst
 ========================= */
 let lastGeminiCall = 0;
-const GEMINI_COOLDOWN = 20_000; // 1 request / 20 sec
+const GEMINI_COOLDOWN = 35_000; 
 
 async function callGemini(prompt) {
   const now = Date.now();

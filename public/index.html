@@ -486,7 +486,7 @@
           body: JSON.stringify({ prompt: q })
         });
 
-        const data = resp.ok ? await resp.json() : { response: "Server error" };
+        const data = resp.ok ? await resp.json() : { response: "Sorry Wait Few second For Next Prompt!" };
         loader.remove();
 
         const raw = data.response || "";
