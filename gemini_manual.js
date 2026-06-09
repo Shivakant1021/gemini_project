@@ -1,16 +1,23 @@
 require('dotenv').config();
 const express = require('express');
-const axios = require('axios');
+const OpenAI = require('openai');
 const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const API_KEY = process.env.GEMINI_API_KEY;
 
 /* =========================
-   RENDER / PROXY FIX (MUST)
+   NVIDIA CLIENT
+========================= */
+const openai = new OpenAI({
+  apiKey: process.env.NVIDIA_API_KEY,
+  baseURL: 'https://integrate.api.nvidia.com/v1'
+});
+
+/* =========================
+   RENDER / PROXY FIX
 ========================= */
 app.set('trust proxy', 1);
 
@@ -22,87 +29,112 @@ app.use(express.json({ limit: '10kb' }));
 app.use(helmet());
 
 /* =========================
-   USER RATE LIMIT (FRONTEND)
-   10 requests / 6 hours / IP
+   USER RATE LIMIT
+   25 requests / hour / IP
 ========================= */
 const userLimiter = rateLimit({
-  windowMs: 6 * 60 * 60 * 1000,
-  max: 10,
+  windowMs: 60 * 60 * 1000,
+  max: 25,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
-    error: '⛔ Too many requests. Try again after 6 hours.'
+    error:
+      '⛔ You have reached your hourly limit (25 requests). Please try again later.'
   }
 });
 
 app.use('/api/gemini', userLimiter);
 
 /* =========================
-   GEMINI THROTTLING (SERVER)
-   Prevent RPM burst
+   GLOBAL NVIDIA PROTECTION
+   Max ~30 requests/minute
 ========================= */
-let lastGeminiCall = 0;
-const GEMINI_COOLDOWN = 35_000; 
+let lastRequestTime = 0;
 
-async function callGemini(prompt) {
+async function waitForSlot() {
   const now = Date.now();
+  const diff = now - lastRequestTime;
 
-  if (now - lastGeminiCall < GEMINI_COOLDOWN) {
-    throw { status: 429, message: 'AI cooling down. Try again shortly.' };
+  if (diff < 2000) {
+    await new Promise(resolve =>
+      setTimeout(resolve, 2000 - diff)
+    );
   }
 
-  lastGeminiCall = now;
-
-  return axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${API_KEY}`,
-    {
-      contents: [{ parts: [{ text: prompt }] }]
-    },
-    { headers: { 'Content-Type': 'application/json' } }
-  );
+  lastRequestTime = Date.now();
 }
 
-
+/* =========================
+   HOME
+========================= */
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+/* =========================
+   AI ENDPOINT
+========================= */
 app.post('/api/gemini', async (req, res) => {
-  const { prompt } = req.body;
-
-  if (!prompt || prompt.length > 2000) {
-    return res.status(400).json({ error: 'Invalid prompt' });
-  }
-
   try {
-    const response = await callGemini(prompt);
+    const { prompt } = req.body;
 
-    const text =
-      response.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      'No response';
-
-    res.json({ response: text });
-
-  } catch (err) {
-    const status = err?.response?.status || err?.status;
-    const data = err?.response?.data;
-
-    console.error('Gemini error:', data || err.message);
-
-    /* ===== GEMINI QUOTA HIT ===== */
-    if (status === 429) {
-      return res.status(429).json({
-        error: '🤖 AI rate limit reached. Please try again later.'
+    /* Prompt Validation */
+    if (
+      !prompt ||
+      typeof prompt !== 'string' ||
+      prompt.trim().length === 0 ||
+      prompt.length > 2000
+    ) {
+      return res.status(400).json({
+        error: 'Invalid prompt'
       });
     }
 
-    /* ===== SAFE FALLBACK ===== */
+    /* NVIDIA RPM Protection */
+    await waitForSlot();
+
+    /* AI Request + Timeout */
+    const completion = await Promise.race([
+      openai.chat.completions.create({
+        model: 'meta/llama-3.1-8b-instruct',
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 512
+      }),
+
+      new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error('Request timeout')),
+          15000
+        )
+      )
+    ]);
+
+    const text =
+      completion?.choices?.[0]?.message?.content ||
+      'No response';
+
+    res.json({
+      response: text
+    });
+
+  } catch (err) {
+    console.error('AI Error:', err.message);
+
     res.status(503).json({
       error: 'AI service temporarily unavailable'
     });
   }
 });
 
+/* =========================
+   START SERVER
+========================= */
 app.listen(PORT, () => {
-  console.log(`Server running on port http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

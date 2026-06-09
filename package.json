@@ -1,23 +1,20 @@
 {
   "name": "gemini-chatbot",
   "version": "1.0.0",
-  "main": "node gemini_manual.js",
+  "main": "gemini_manual.js",
   "scripts": {
     "start": "node gemini_manual.js",
     "dev": "nodemon gemini_manual.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
-    "axios": "^1.11.0",
-    "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
     "helmet": "^8.1.0",
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.14",
+    "openai": "^6.42.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
